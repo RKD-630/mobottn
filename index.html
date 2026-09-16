@@ -1,0 +1,397 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>PC Website → Mobile App Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="style.css" /></head>
+<body>
+
+<div class="app">
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="brand-wrapper">
+      <div class="brand-logo-badge">📱</div>
+      <div class="brand">Web2App <span>Converter</span> <span class="brand-tag">v2.0 Pro</span></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" id="newProjectBtn" title="Reset and start new project">📄 New</button>
+      <button class="btn" id="saveProjectBtn" title="Save current project to browser">💾 Save</button>
+      <button class="btn" id="loadProjectBtn" title="Load saved project from browser">📂 Load</button>
+      <button class="btn primary" id="generateBtn" title="Generate and download mobile website">⚡ Generate &amp; Download</button>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <main class="workspace">
+    <!-- Left: Settings & Navigation Builder -->
+    <section class="editor">
+
+      <!-- Panel 1: Website Project Source -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">🌐</span> Website Project &amp; Source</h3>
+          <span class="badge ok" id="sourceBadge">Sample Webpage</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label><strong>Project / Website Name</strong></label>
+            <input type="text" id="projectName" value="My Mobile Web App" placeholder="e.g. Acme Store" />
+          </div>
+
+          <!-- Source Selector Tabs -->
+          <label><strong>Web Page Source</strong></label>
+          <div class="source-tabs">
+            <button class="source-tab active" data-source="file">📁 Upload HTML File</button>
+            <button class="source-tab" data-source="url">🔗 Website URL</button>
+            <button class="source-tab" data-source="code">📝 Paste HTML Code</button>
+          </div>
+
+          <!-- Tab A: File Upload -->
+          <div id="sourceFileArea">
+            <div class="row">
+              <button class="btn primary" id="uploadFileBtn" style="flex:1">📤 Choose HTML / Web Files</button>
+              <button class="btn" id="useSampleBtn">↺ Use Sample</button>
+            </div>
+            <input type="file" id="htmlFileInput" accept=".html,.htm,.txt" hidden="" />
+            <p class="hint" style="margin-top:8px">Upload your desktop website's HTML file. The converter will automatically adapt it with mobile viewport meta tags, mobile overflow prevention, responsive adjustments, and the mobile bottom navigation bar.</p>
+          </div>
+
+          <!-- Tab B: Website URL -->
+          <div id="sourceUrlArea" class="hidden">
+            <div class="row">
+              <input type="text" id="siteUrlInput" placeholder="https://example.com" value="" />
+              <button class="btn primary" id="loadUrlBtn">Load Preview</button>
+            </div>
+            <p class="hint" style="margin-top:8px">Note: External sites with strict security headers (<code>X-Frame-Options: DENY</code>) may prevent in-browser iframe embedding. For 100% full conversion, upload your HTML file directly or paste its code below.</p>
+          </div>
+
+          <!-- Tab C: Paste HTML Code -->
+          <div id="sourceCodeArea" class="hidden">
+            <textarea id="rawHtmlCode" placeholder="Paste your HTML code here (&lt;!DOCTYPE html&gt;&lt;html&gt;...)"></textarea>
+            <button class="btn primary small" id="applyCodeBtn" style="margin-top:6px">Apply HTML to Preview</button>
+          </div>
+
+          <div id="sourceStatus" class="notice success" style="margin-top:12px">
+            Active: Using built-in responsive sample web page. Upload your HTML or enter a URL above to convert your own page.
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Bottom Navigation Bar Buttons (THE CORE REQUEST) -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">🧭</span> Bottom Navigation Bar Buttons</h3>
+          <span class="badge ok" id="buttonCountBadge">4 Buttons</span>
+        </div>
+        <div class="panel-body">
+          <p class="hint">
+            Customize the buttons that appear on the mobile bottom navigation bar. Each button can <strong>directly link to a URL/page</strong> or open a <strong>popup submenu with multiple links</strong>.
+          </p>
+
+          <!-- List of Navigation Buttons -->
+          <div id="navButtonsList" class="nav-buttons-list">
+            <!-- Populated dynamically -->
+          </div>
+
+          <button class="btn primary" id="addNewNavBtn" style="width:100%; margin-top:14px; padding:11px">
+            ＋ Add Navigation Bottom Bar Button
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel 3: Bottom Navigation Styling & Design -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">🎨</span> Bottom Navigation Design &amp; Style</h3>
+        </div>
+        <div class="panel-body">
+          <div class="grid2">
+            <div class="field">
+              <label>Style Preset</label>
+              <select id="navPreset">
+                <option value="modern">Modern Flat</option>
+                <option value="floating">Floating Pill Bar</option>
+                <option value="glass">Frosted Glass</option>
+                <option value="minimal">Clean Minimal</option>
+                <option value="material">Material Elevation</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Bar Height (px)</label>
+              <input type="number" id="navHeight" value="68" min="50" max="96" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Active Button Color</label>
+              <input type="color" id="navActiveColor" value="#3b82f6" />
+            </div>
+            <div class="field">
+              <label>Inactive Button Color</label>
+              <input type="color" id="navInactiveColor" value="#64748b" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Bar Background Color</label>
+              <input type="color" id="navBgColor" value="#ffffff" />
+            </div>
+            <div class="field">
+              <label>Icon Size (px)</label>
+              <input type="number" id="navIconSize" value="20" min="14" max="32" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Font Size (px)</label>
+              <input type="number" id="navFontSize" value="10" min="8" max="15" />
+            </div>
+            <div class="field">
+              <label>Border Radius (px)</label>
+              <input type="number" id="navRadius" value="0" min="0" max="36" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 4: Mobile Screen & Layout Adjustments -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">📐</span> Mobile Screen &amp; Optimization</h3>
+        </div>
+        <div class="panel-body">
+          <div class="grid2">
+            <div class="field">
+              <label>Device Preset</label>
+              <select id="devicePreset">
+                <option value="iphone">iPhone 15 / 16 (390 x 844)</option>
+                <option value="android">Android Flagship (412 x 892)</option>
+                <option value="compact">Compact Phone (360 x 740)</option>
+                <option value="tablet">iPad / Tablet (768 x 1024)</option>
+                <option value="custom">Custom Size</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Mobile Content Layout</label>
+              <select id="layoutMode">
+                <option value="responsive">Responsive Fluid (Recommended)</option>
+                <option value="fit">Fit to Screen Width</option>
+                <option value="contained">Contained Viewport</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Preview Width (px)</label>
+              <input type="number" id="phoneWidth" value="390" min="280" max="800" />
+            </div>
+            <div class="field">
+              <label>Preview Height (px)</label>
+              <input type="number" id="phoneHeight" value="780" min="500" max="1100" />
+            </div>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" id="optResponsiveImages" checked="" /> Auto-scale responsive images (max-width: 100%)
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optPreventOverflow" checked="" /> Prevent horizontal scrolling / overflow
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optTouchOptimized" checked="" /> Touch-friendly button sizes &amp; spacing
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optAddSafePadding" checked="" /> Add bottom padding for navigation bar clearance
+          </label>
+        </div>
+      </div>
+
+      <!-- Panel 5: Mobile App Header -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">🏷️</span> Mobile Top Header</h3>
+        </div>
+        <div class="panel-body">
+          <label class="check">
+            <input type="checkbox" id="optShowHeader" checked="" /> Show Top Mobile App Header
+          </label>
+          <div class="field">
+            <label>Header Title</label>
+            <input type="text" id="headerTitle" value="My Mobile Web App" />
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label>Header Height (px)</label>
+              <input type="number" id="headerHeight" value="56" min="40" max="80" />
+            </div>
+            <div class="field">
+              <label>Header Background</label>
+              <input type="color" id="headerBg" value="#ffffff" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Header Logo (Optional Image)</label>
+            <input type="file" id="headerLogoInput" accept="image/*" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 6: Storage & Export Config -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><span class="ico">📦</span> Configuration &amp; Export</h3>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <button class="btn" id="exportConfigBtn">📥 Export Settings JSON</button>
+            <button class="btn" id="importConfigBtn">📤 Import Settings JSON</button>
+            <button class="btn danger" id="resetBtn">↺ Reset All</button>
+          </div>
+          <input type="file" id="configFileInput" accept=".json" hidden="" />
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right: Live Interactive Mobile Phone Preview -->
+    <section class="preview-area">
+      <!-- Toolbar -->
+      <div class="preview-toolbar">
+        <span>Interactive Mobile Preview</span>
+        <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">−</button>
+        <span id="zoomLabel" style="min-width:38px; text-align:center">100%</span>
+        <button class="zoom-btn" id="zoomInBtn" title="Zoom In">+</button>
+        <button class="btn small" id="previewInNewTabBtn" title="Open converted preview in new window">↗ New Tab</button>
+      </div>
+
+      <!-- Phone Frame Container -->
+      <div class="phone-viewport-container" id="phoneContainer">
+        <div class="phone-mockup" id="phoneMockup">
+          <!-- Notch -->
+          <div class="phone-notch"></div>
+
+          <!-- Phone Inner Screen -->
+          <div class="phone-screen" id="phoneScreen">
+
+            <!-- Mobile Header -->
+            <div class="phone-header" id="phoneHeader">
+              <img id="phoneLogoImg" class="phone-logo hidden" alt="Logo" />
+              <div class="phone-title" id="phoneTitleText">My Mobile Web App</div>
+              <div class="phone-header-right">⋮</div>
+            </div>
+
+            <!-- Mobile Body Content -->
+            <div class="phone-body" id="phoneBody">
+              <!-- Live Iframe for Converted Web Page -->
+              <iframe id="previewIframe" class="phone-iframe" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+            </div>
+
+            <!-- Submenu Sheet (Popup for buttons configured with sub-links) -->
+            <div class="phone-submenu-sheet" id="phoneSubmenuSheet">
+              <div class="sheet-header">
+                <h4 id="sheetTitle">Menu</h4>
+                <button class="sheet-close-btn" id="sheetCloseBtn">✕</button>
+              </div>
+              <div class="sheet-links" id="sheetLinksList"></div>
+            </div>
+
+            <!-- Mobile Bottom Navigation Bar -->
+            <nav class="phone-bottom-nav" id="phoneBottomNav">
+              <!-- Dynamically populated buttons -->
+            </nav>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal: Add / Edit Navigation Bottom Bar Button -->
+<div class="modal-overlay" id="navButtonModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Bottom Bar Button</h3>
+      <button class="modal-close" id="modalCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editButtonIndex" value="-1" />
+
+      <div class="field">
+        <label><strong>Button Label (Name)</strong></label>
+        <input type="text" id="modalBtnLabel" placeholder="e.g. Home, Shop, Cart, Profile" value="Home" />
+      </div>
+
+      <div class="field">
+        <label><strong>Button Icon</strong></label>
+        <input type="text" id="modalBtnIcon" placeholder="Emoji or symbol e.g. 🏠, 🔍, 🛍️, 👤" value="🏠" />
+        <div class="icon-pills">
+          <button class="icon-pill" data-icon="🏠">🏠</button>
+          <button class="icon-pill" data-icon="🔍">🔍</button>
+          <button class="icon-pill" data-icon="🛍️">🛍️</button>
+          <button class="icon-pill" data-icon="🛒">🛒</button>
+          <button class="icon-pill" data-icon="👤">👤</button>
+          <button class="icon-pill" data-icon="⚙️">⚙️</button>
+          <button class="icon-pill" data-icon="☰">☰</button>
+          <button class="icon-pill" data-icon="✉️">✉️</button>
+          <button class="icon-pill" data-icon="📞">📞</button>
+          <button class="icon-pill" data-icon="⭐">⭐</button>
+          <button class="icon-pill" data-icon="🔔">🔔</button>
+          <button class="icon-pill" data-icon="ℹ️">ℹ️</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label><strong>Button Action Type</strong></label>
+        <select id="modalBtnType">
+          <option value="link">🔗 Direct Link (Navigates to URL)</option>
+          <option value="submenu">📑 Open Submenu (Shows multiple links)</option>
+        </select>
+      </div>
+
+      <!-- Action Type 1: Direct Link -->
+      <div id="modalDirectLinkSection">
+        <div class="field">
+          <label><strong>Target URL / Link</strong></label>
+          <input type="text" id="modalBtnUrl" placeholder="e.g. https://example.com, /products.html, #contact" value="#home" />
+          <p class="hint">Clicking this button on the mobile bottom bar will directly navigate to this URL.</p>
+        </div>
+        <div class="field">
+          <label><strong>Open Target</strong></label>
+          <select id="modalBtnTarget">
+            <option value="_self">In Same Frame / Page (_self)</option>
+            <option value="_blank">In New Window / Tab (_blank)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Type 2: Submenu Links -->
+      <div id="modalSubmenuSection" class="hidden">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
+          <label style="margin:0"><strong>Submenu Links</strong></label>
+          <button class="btn small" id="addSubLinkRowBtn">＋ Add Sub-link</button>
+        </div>
+        <div id="subLinksContainer" style="display:flex; flex-direction:column; gap:8px">
+          <!-- Dynamic sub-links rows -->
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="modalCancelBtn">Cancel</button>
+      <button class="btn primary" id="modalSaveBtn">Save Button</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script src="script.js"></script></body></html>
