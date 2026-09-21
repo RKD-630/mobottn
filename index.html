@@ -77,6 +77,21 @@
           <div id="sourceStatus" class="notice success" style="margin-top:12px">
             Active: Using built-in responsive sample web page. Upload your HTML or enter a URL above to convert your own page.
           </div>
+
+          <!-- Quick Actions & Status -->
+          <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+            <button class="btn small" id="checkCodeErrorsSourceBtn" title="Analyze web code for syntax errors, missing tags, broken handlers and auto-fix">
+              🩺 Check &amp; Fix Code Errors
+            </button>
+            <button class="btn small" id="viewImportedButtonsQuickBtn" title="View all buttons extracted from this web file">
+              📥 View Extracted Buttons (<span id="quickExtractedBtnCount">0</span>)
+            </button>
+          </div>
+
+          <div id="importedButtonsNotice" class="notice info hidden" style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span>✨ Found <strong id="detectedButtonsCount">0</strong> buttons in this web file!</span>
+            <button class="btn small primary" id="jumpToImportTabBtn">View in Import button tab →</button>
+          </div>
         </div>
       </div>
 
@@ -84,21 +99,77 @@
       <div class="panel">
         <div class="panel-header">
           <h3><span class="ico">🧭</span> Bottom Navigation Bar Buttons</h3>
-          <span class="badge ok" id="buttonCountBadge">4 Buttons</span>
+          <span class="badge ok" id="buttonCountBadge">3 Buttons</span>
         </div>
         <div class="panel-body">
-          <p class="hint">
-            Customize the buttons that appear on the mobile bottom navigation bar. Each button can <strong>directly link to a URL/page</strong> or open a <strong>popup submenu with multiple links</strong>.
-          </p>
 
-          <!-- List of Navigation Buttons -->
-          <div id="navButtonsList" class="nav-buttons-list">
-            <!-- Populated dynamically -->
+          <!-- Sub-tabs: Active Buttons vs Imported Buttons -->
+          <div class="panel-subtabs">
+            <button class="panel-subtab active" id="tabNavButtons" data-target="navButtonsView">
+              <span>🧭 Bottom Bar Buttons</span>
+              <span class="subtab-badge" id="subtabNavCount">4</span>
+            </button>
+            <button class="panel-subtab" id="tabImportButtons" data-target="importButtonView">
+              <span>📥 Import button</span>
+              <span class="subtab-badge glow" id="subtabImportCount">0 found</span>
+            </button>
           </div>
 
-          <button class="btn primary" id="addNewNavBtn" style="width:100%; margin-top:14px; padding:11px">
-            ＋ Add Navigation Bottom Bar Button
-          </button>
+          <!-- View 1: Active Bottom Bar Navigation Buttons -->
+          <div id="navButtonsView">
+            <p class="hint">
+              Customize the buttons that appear on the mobile bottom navigation bar. Each button can <strong>directly link to a URL/page</strong> or open a <strong>popup submenu with multiple links</strong>.
+            </p>
+
+            <!-- List of Navigation Buttons -->
+            <div id="navButtonsList" class="nav-buttons-list">
+              <!-- Populated dynamically -->
+            </div>
+
+            <button class="btn primary" id="addNewNavBtn" style="width:100%; margin-top:14px; padding:11px">
+              ＋ Add Navigation Bottom Bar Button
+            </button>
+          </div>
+
+          <!-- View 2: Discovered & Imported Buttons from Web File -->
+          <div id="importButtonView" class="hidden">
+            <div class="import-toolbar">
+              <div class="import-search-row">
+                <input type="text" id="importBtnSearchInput" placeholder="🔍 Search button name, id, class, or code..." />
+                <button class="btn small" id="rescanButtonsBtn" title="Re-scan imported web page for buttons">🔄 Re-scan</button>
+              </div>
+
+              <div class="import-filter-pills">
+                <button class="filter-pill active" data-filter="all">All (<span id="filterCountAll">0</span>)</button>
+                <button class="filter-pill" data-filter="button">&lt;button&gt; (<span id="filterCountButton">0</span>)</button>
+                <button class="filter-pill" data-filter="input">&lt;input&gt; (<span id="filterCountInput">0</span>)</button>
+                <button class="filter-pill" data-filter="link">&lt;a&gt; Links (<span id="filterCountLink">0</span>)</button>
+                <button class="filter-pill" data-filter="js">With JS / onclick (<span id="filterCountJs">0</span>)</button>
+              </div>
+
+              <div class="import-actions-row">
+                <button class="btn small primary" id="checkCodeErrorsBtn">
+                  🩺 Check &amp; Fix Code Errors
+                </button>
+                <button class="btn small" id="importAllToNavBtn" title="Add all buttons to bottom navigation bar (up to limit)">
+                  ➕ Import All to Bottom Bar
+                </button>
+                <button class="btn small" id="copyAllCodesBtn" title="Copy all detected button HTML and JS codes to clipboard">
+                  📋 Copy All Codes
+                </button>
+              </div>
+            </div>
+
+            <div id="importButtonsSummary" class="notice" style="margin-bottom:12px">
+              Scanning web page...
+            </div>
+
+            <!-- List of Detected Buttons -->
+            <div id="importedButtonsList" class="imported-buttons-list">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -290,7 +361,7 @@
             <!-- Mobile Body Content -->
             <div class="phone-body" id="phoneBody">
               <!-- Live Iframe for Converted Web Page -->
-              <iframe id="previewIframe" class="phone-iframe" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+              <iframe id="previewIframe" class="phone-iframe"></iframe>
             </div>
 
             <!-- Submenu Sheet (Popup for buttons configured with sub-links) -->
@@ -391,7 +462,76 @@
   </div>
 </div>
 
+<!-- Modal: Code Error Inspector & Auto-Fixer -->
+<div class="modal-overlay" id="codeErrorModal">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:8px">
+        <span style="font-size:20px">🩺</span>
+        <h3 id="codeErrorModalTitle">Web Code &amp; Button Error Inspector</h3>
+      </div>
+      <button class="modal-close" id="codeErrorCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Error Summary Counters -->
+      <div class="error-summary-bar">
+        <div class="error-stat-chip danger" id="statChipDanger">
+          <span class="icon">❌</span>
+          <div>
+            <strong id="summaryErrorCount">0</strong>
+            <span>Syntax Errors</span>
+          </div>
+        </div>
+        <div class="error-stat-chip warning" id="statChipWarning">
+          <span class="icon">⚠️</span>
+          <div>
+            <strong id="summaryWarnCount">0</strong>
+            <span>Warnings</span>
+          </div>
+        </div>
+        <div class="error-stat-chip info" id="statChipInfo">
+          <span class="icon">💡</span>
+          <div>
+            <strong id="summaryInfoCount">0</strong>
+            <span>Improvements</span>
+          </div>
+        </div>
+        <button class="btn primary" id="autoFixHeaderBtn" style="margin-left:auto; gap:8px">
+          ⚡ Auto-Fix All Errors
+        </button>
+      </div>
 
+      <!-- Mode switcher inside modal -->
+      <div class="panel-subtabs" style="margin-top:14px">
+        <button class="panel-subtab active" id="tabErrorIssues" data-target="errorIssuesView">
+          ⚠️ Detected Issues (<span id="modalIssuesCountBadge">0</span>)
+        </button>
+        <button class="panel-subtab" id="tabErrorCodePreview" data-target="errorCodePreviewView">
+          📄 Fixed Code Preview
+        </button>
+      </div>
 
+      <!-- Tab 1: Issues List -->
+      <div id="errorIssuesView">
+        <div id="errorIssuesContainer" class="error-issues-container" style="margin-top:12px">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Tab 2: Fixed Code Preview -->
+      <div id="errorCodePreviewView" class="hidden">
+        <p class="hint" style="margin:10px 0 6px">Preview of the cleaned and repaired HTML code with auto-fixes applied:</p>
+        <textarea id="fixedCodePreviewTextarea" readonly="" style="width:100%; height:280px; font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); padding:12px; resize:vertical"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="codeErrorCancelBtn">Close</button>
+      <button class="btn success" id="applyAutoFixBtn">
+        ⚡ Apply Auto-Fix &amp; Update Preview
+      </button>
+    </div>
+  </div>
+</div>
 
 <script src="script.js"></script></body></html>
